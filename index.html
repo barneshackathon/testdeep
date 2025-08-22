@@ -3,207 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شات ويب مع n8n Webhook و Respond to Webhook</title>
+    <title>Barns – Chat</title>
     <style>
         :root {
-            --primary-color: #4a89dc;
-            --secondary-color: #5d9cec;
-            --light-color: #f5f9ff;
-            --dark-color: #2c3e50;
-            --success-color: #4caf50;
-            --error-color: #f44336;
-            --ai-color: #8e44ad;
+            --green: #0f5b46;
+            --gold: #e9b949;
+            --text: #1a1d1c;
+            --bottom-nav-h: 56px;
+            --chat-input-h: 56px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-        }
-        
-        header {
-            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        
-        .webhook-setup {
-            background-color: var(--light-color);
-            padding: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .webhook-setup label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: var(--dark-color);
-        }
-        
-        .webhook-setup input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 16px;
+        * {
             box-sizing: border-box;
         }
         
-        .webhook-setup .hint {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #e6f1ee, #f5efe9);
+            font-family: 'Cairo', system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            color: var(--text);
+            height: 100%;
         }
         
-        .chat-container {
+        .screen {
+            width: 100%;
+            max-width: 380px;
+            min-height: 100vh;
+            min-height: 100svh;
+            min-height: 100dvh;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 400px;
-        }
-        
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-        
-        .message {
-            margin-bottom: 15px;
-            padding: 12px 18px;
-            border-radius: 20px;
-            max-width: 80%;
-            word-wrap: break-word;
             position: relative;
-            animation: fadeIn 0.3s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--green);
+            color: #fff;
+            padding: 10px 12px;
         }
         
-        .sent {
-            background-color: var(--primary-color);
-            color: white;
-            margin-left: auto;
-            margin-right: 0;
-            border-bottom-right-radius: 5px;
+        .chat-header .icon-btn.back {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            color: #111;
+            text-decoration: none;
+            font-weight: bold;
         }
         
-        .received {
-            background-color: #e6e6e6;
-            color: #333;
-            margin-right: auto;
-            margin-left: 0;
-            border-bottom-left-radius: 5px;
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .ai {
-            background-color: var(--ai-color);
-            color: white;
-            margin-right: auto;
-            margin-left: 0;
-            border-bottom-left-radius: 5px;
+        .chat-title .title {
+            font-weight: 750;
         }
         
-        .message-time {
-            font-size: 11px;
-            margin-top: 5px;
+        .chat-title img {
+            width: 85px;
+            height: 85px;
+        }
+        
+        .chat-title small {
+            display: block;
+            font-size: 12px;
             opacity: 0.8;
+        }
+        
+        .chat-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: calc(100vh - 200px);
+            max-height: 709px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            padding-bottom: calc(var(--chat-input-h) + 80px);
+        }
+        
+        .msg {
+            max-width: 80%;
+            padding: 10px 12px;
+            border-radius: 14px;
+            font-size: 14px;
+        }
+        
+        .msg.bot {
+            background: #eff8f4;
+            border: 1px solid #dcefe6;
+            align-self: flex-start;
+        }
+        
+        .msg.me {
+            background: var(--green);
+            color: #fff;
+            align-self: flex-end;
         }
         
         .chat-input {
             display: flex;
-            padding: 15px;
-            background-color: #fff;
-            border-top: 1px solid #ddd;
+            gap: 8px;
+            border-top: 1px solid #eee;
+            padding: 8px 12px;
+            position: fixed;
+            bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            z-index: 10;
+            min-height: var(--chat-input-h);
+            border-radius: 24px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 380px;
         }
         
         .chat-input input {
             flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
+            padding: 12px 14px;
             border-radius: 20px;
-            margin-right: 10px;
-            font-size: 16px;
+            border: 1px solid #dfe8e4;
+            font-size: 14px;
         }
         
-        .chat-input button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 20px;
+        .chat-input .send {
+            background: var(--green);
+            color: #fff;
+            border: 0;
+            border-radius: 18px;
+            padding: 0 16px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
+            transition: all 0.2s ease;
         }
         
-        .chat-input button:hover {
-            background-color: var(--secondary-color);
+        .chat-input .send:hover {
+            background: #0a4a3a;
+            transform: translateY(-1px);
+        }
+        
+        .bottom-nav {
+            margin-top: auto;
+            position: sticky;
+            bottom: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid #eaeaea;
+            background: #fff;
+            padding: 8px;
+            padding-bottom: calc(8px + var(--safe-bottom));
+            z-index: 9;
+            min-height: var(--bottom-nav-h);
+        }
+        
+        .bottom-nav .item {
+            display: grid;
+            justify-items: center;
+            color: #7a8582;
+            text-decoration: none;
+            font-size: 11px;
+        }
+        
+        .bottom-nav .item .ico {
+            font-size: 18px;
+        }
+        
+        .bottom-nav .item.active {
+            color: var(--green);
+            font-weight: 800;
+        }
+        
+        .bottom-nav .item.disabled {
+            opacity: .45;
+            pointer-events: none;
+        }
+        
+        .bottom-nav .item .ico img {
+            width: 20px;
+            height: 20px;
+            display: block;
+            transition: transform .2s ease, filter .2s ease;
+        }
+        
+        .bottom-nav .item.active .ico img {
+            filter: brightness(0) saturate(100%) invert(25%) sepia(75%) saturate(473%) hue-rotate(118deg) brightness(92%) contrast(90%);
+        }
+        
+        .bottom-nav .item:active .ico img {
+            transform: scale(0.9);
         }
         
         .status {
-            padding: 12px;
+            padding: 8px;
             text-align: center;
             font-weight: bold;
-            border-top: 1px solid #eee;
-        }
-        
-        .success {
-            color: var(--success-color);
-            background-color: rgba(76, 175, 80, 0.1);
-        }
-        
-        .error {
-            color: var(--error-color);
-            background-color: rgba(244, 67, 54, 0.1);
-        }
-        
-        .message-preview {
-            background-color: var(--light-color);
-            padding: 15px;
-            margin: 15px;
-            border-radius: 10px;
-            font-family: monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
+            font-size: 12px;
+            color: #666;
             display: none;
         }
         
-        .toggle-preview {
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            cursor: pointer;
-            text-align: center;
+        .status.success {
+            color: #4caf50;
+            background-color: rgba(76, 175, 80, 0.1);
             display: block;
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
+        }
+        
+        .status.error {
+            color: #f44336;
+            background-color: rgba(244, 67, 54, 0.1);
+            display: block;
         }
         
         .typing-indicator {
@@ -242,156 +273,127 @@
             50% { opacity: 1; }
         }
         
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
+        @media (max-width: 380px) {
+            .chat-input {
+                width: calc(100% - 16px);
+                max-width: 364px;
             }
-            
-            .container {
-                border-radius: 10px;
+        }
+        
+        @media (min-width: 381px) {
+            .chat-input {
+                width: 100%;
+                max-width: 380px;
             }
-            
-            .message {
-                max-width: 90%;
+        }
+        
+        @media (max-width: 440px) {
+            .screen {
+                border-radius: 0;
             }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>شات ويب مع دعم n8n Webhook و Respond to Webhook</h1>
+<body data-page="chat">
+    <div class="screen">
+        <header class="chat-header">
+            <a class="icon-btn back" href="index.html" aria-label="Back">←</a>
+            <div class="chat-title">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODUiIGhlaWdodD0iODUiIHZpZXdCb3g9IjAgMCA4NSA4NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijg1IiBoZWlnaHQ9Ijg1IiByeD0iMTIiIGZpbGw9IiMwZjViNDYiLz4KPHBhdGggZD0iTTQyLjUgMjJDMzUuNSAyMiAzMCAyNy41IDMwIDM0LjVWMzZIMjBWNTZINjVWMzZINTVWMzQuNUM1NSAyNy41IDQ5LjUgMjIgNDIuNSAyMlpNNDIuNSAyOEM0Ni42NSAyOCA1MCAzMS4zNSA1MCAzNS41VjM2SDM1VjM1LjVDMzUgMzEuMzUgMzguMzUgMjggNDIuNSAyOFpNNDAgNDRINDUuMDVWNDlINDBWNDRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="Barnie">
+                <div>
+                    <div class="title">Barnie</div>
+                    <small>AI Assistant</small>
+                </div>
+            </div>
         </header>
-        
-        <div class="webhook-setup">
-            <label for="webhook-url">رابط ويب هوك n8n:</label>
-            <input type="url" id="webhook-url" placeholder="أدخل رابط الـ webhook الخاص بـ n8n هنا" value="https://sultannn.app.n8n.cloud/webhook-test/webhooktest">
-            <div class="hint">سيتم حفظ الرابط تلقائياً محلياً في متصفحك</div>
-        </div>
-        
-        <div class="chat-container">
-            <div class="chat-messages" id="chat-messages">
-                <div class="message received">
-                    مرحباً! هذه الدردشة تستخدم خاصية Respond to Webhook في n8n.
-                    <div class="message-time">الآن</div>
-                </div>
-                <div class="message ai">
-                    أهلاً بك! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟
-                    <div class="message-time">الآن</div>
-                </div>
-            </div>
-            
-            <div class="typing-indicator" id="typing-indicator">
-                <div class="typing-dots">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                </div>
-            </div>
-            
-            <div class="chat-input">
-                <input type="text" id="message-input" placeholder="اكتب رسالتك هنا...">
-                <button id="send-button">إرسال</button>
+
+        <main class="chat-body" id="chat-body" role="log" aria-live="polite">
+            <div class="msg bot">Hey there! I'm Barnie, your friendly coffee buddy. How's your day going so far? Any drink on your mind?</div>
+        </main>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="typing-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
             </div>
         </div>
-        
-        <button class="toggle-preview" id="toggle-preview">عرض محتوى الطلب</button>
-        <div class="message-preview" id="request-preview"></div>
-        
+
         <div class="status" id="status"></div>
+
+        <form class="chat-input" id="chat-form">
+            <input id="chat-text" placeholder="Write your message .." autocomplete="off" />
+            <button class="send" type="submit">➤</button>
+        </form>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="item active">
+                <span class="ico"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMThWMTFIMTJWMThIMTZWOUgxOEwMTAgM0wyIDlINDRWMTFINlYxOEg4WiIgZmlsbD0iIzBhNGEzYSIvPgo8L3N2Zz4K" alt="Home"></span>
+                <span>Home</span>
+            </a>
+            <a href="tree.html" class="item">
+                <span class="ico"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJDNi41IDIgNCA0LjUgNCA4QzQgOS43IDQuOCAxMS4zIDYgMTIuNVYxN0g4VjExSDhDNi45IDExIDYgMTAuMSA2IDlDNiA3LjkgNi45IDcgOCA3SDhWNUM4IDMuOSA4LjkgMyAxMCAzQzExLjEgMyAxMiAzLjkgMTIgNVY3SDEyQzEzLjEgNyAxNCA3LjkgMTQgOUMxNCAxMC4xIDEzLjEgMTEgMTIgMTFIMTJWMTdIMTRWMTIuNUMxNS4yIDExLjMgMTYgOS43IDE2IDhDMTYgNC41IDEzLjUgMiAxMCAyWiIgZmlsbD0iIzBhNGEzYSIvPgo8L3N2Zz4K" alt="Tree"></span>
+                <span>Tree</span>
+            </a>
+            <a href="#" class="item disabled">
+                <span class="ico"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUgMkM0LjIgMiAzLjUgMi41IDMuMiAzLjJMMS43IDcuMkMxLjIgOC4yIDEuNSA5LjMgMi40IDkuOEw2LjUgMTIuM0M2LjUgMTIuMyA2LjUgMTIuMyA2LjUgMTIuM0M2LjUgMTMuNCA3LjMgMTQuMyA4LjMgMTQuM0gxNC43QzE1LjcgMTQuMyAxNi41IDEzLjQgMTYuNSAxMi4zTDE3LjUgOS44QzE4LjQgOS4zIDE4LjcgOC4yIDE4LjIgNy4yTDE2LjggMy4yQzE2LjUgMi41IDE1LjggMiAxNSAySDVaIiBmaWxsPSIjMGE0YTNhIi8+CjxwYXRoIGQ9Ik04LjUgNkgxMS41VjExSDguNVY2WiIgZmlsbD0iI2ZmZiIvPgo8L3N2Zz4K" alt="Orders"></span>
+                <span>Orders</span>
+            </a>
+            <a href="#" class="item disabled">
+                <span class="ico"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDJDNi41IDIgNCA0LjUgNCA4QzQgMTEuNSA2LjUgMTQgMTAgMTRDMTMuNSAxNCAxNiAxMS41IDE2IDhDMTYgNC41IDEzLjUgMiAxMCAyWk0xMCA0QzEyLjIgNCAxNCA1LjggMTQgOEMxNCAxMC4yIDEyLjIgMTIgMTAgMTJDNy44IDEyIDYgMTAuMiA2IDhDNiA1LjggNy44IDQgMTAgNFpNMTAgMTZDNi41IDE2IDMuMyAxNy4yIDIgMTlIMThDMTYuNyAxNy4yIDEzLjUgMTYgMTAgMTZaIiBmaWxsPSIjMGE0YTNhIi8+Cjwvc3ZnPgo=" alt="Account"></span>
+                <span>Account</span>
+            </a>
+        </nav>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const webhookUrlInput = document.getElementById('webhook-url');
-            const messageInput = document.getElementById('message-input');
-            const sendButton = document.getElementById('send-button');
-            const chatMessages = document.getElementById('chat-messages');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-text');
+            const chatBody = document.getElementById('chat-body');
             const statusDiv = document.getElementById('status');
-            const togglePreview = document.getElementById('toggle-preview');
-            const requestPreview = document.getElementById('request-preview');
             const typingIndicator = document.getElementById('typing-indicator');
             
-            // تحميل رابط الويب هوك من التخزين المحلي إذا كان موجوداً
-            const savedWebhookUrl = localStorage.getItem('webhookUrl');
-            if (savedWebhookUrl) {
-                webhookUrlInput.value = savedWebhookUrl;
-            }
-            
-            // حفظ رابط الويب هوك عند تغييره
-            webhookUrlInput.addEventListener('change', function() {
-                localStorage.setItem('webhookUrl', webhookUrlInput.value);
-                showStatus('تم حفظ رابط الويب هوك', 'success');
-            });
+            // رابط ويب هوك n8n
+            const webhookUrl = 'https://sultannn.app.n8n.cloud/webhook-test/webhooktest';
             
             // إرسال الرسالة عند النقر على زر الإرسال
-            sendButton.addEventListener('click', sendMessage);
-            
-            // إرسال الرسالة عند الضغط على Enter
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-            
-            // تبديل عرض محتوى الطلب
-            togglePreview.addEventListener('click', function() {
-                if (requestPreview.style.display === 'none') {
-                    requestPreview.style.display = 'block';
-                    togglePreview.textContent = 'إخفاء محتوى الطلب';
-                } else {
-                    requestPreview.style.display = 'none';
-                    togglePreview.textContent = 'عرض محتوى الطلب';
-                }
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendMessage();
             });
             
             function sendMessage() {
-                const message = messageInput.value.trim();
-                const webhookUrl = webhookUrlInput.value.trim();
+                const message = chatInput.value.trim();
                 
                 if (!message) {
-                    showStatus('الرجاء إدخال رسالة', 'error');
-                    return;
-                }
-                
-                if (!webhookUrl) {
-                    showStatus('الرجاء إدخال رابط ويب هوك n8n', 'error');
                     return;
                 }
                 
                 // إضافة الرسالة إلى الشات
-                addMessageToChat(message, 'sent');
-                
-                // إعداد محتوى الطلب لعرضه
-                const requestBody = JSON.stringify({ message: message });
-                requestPreview.textContent = `POST ${webhookUrl}\n\nContent-Type: application/json\n\n${requestBody}`;
+                addMessageToChat(message, 'me');
                 
                 // إظهار مؤشر الكتابة
                 typingIndicator.style.display = 'block';
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                chatBody.scrollTop = chatBody.scrollHeight;
                 
                 // إرسال الرسالة إلى ويب هوك n8n باستخدام POST
                 sendToWebhook(webhookUrl, message);
                 
                 // مسح حقل الإدخال
-                messageInput.value = '';
+                chatInput.value = '';
             }
             
             function addMessageToChat(message, type) {
                 const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message');
+                messageDiv.classList.add('msg');
                 messageDiv.classList.add(type);
                 messageDiv.textContent = message;
                 
-                const timeDiv = document.createElement('div');
-                timeDiv.classList.add('message-time');
-                timeDiv.textContent = new Date().toLocaleTimeString();
-                
-                messageDiv.appendChild(timeDiv);
-                chatMessages.appendChild(messageDiv);
+                chatBody.appendChild(messageDiv);
                 
                 // التمرير إلى الأسفل لعرض الرسالة الجديدة
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                chatBody.scrollTop = chatBody.scrollHeight;
             }
             
             function sendToWebhook(url, message) {
@@ -422,10 +424,10 @@
                     if (data) {
                         // محاولة استخراج النص من الرد
                         const responseText = extractResponseText(data);
-                        addMessageToChat(responseText, 'ai');
+                        addMessageToChat(responseText, 'bot');
                     } else {
                         // في حالة عدم وجود رد، نضيف رسالة افتراضية
-                        addMessageToChat('شكراً على رسالتك. كيف يمكنني مساعدتك further?', 'ai');
+                        addMessageToChat('شكراً على رسالتك. كيف يمكنني مساعدتك further?', 'bot');
                     }
                 })
                 .catch(error => {
@@ -436,7 +438,7 @@
                     typingIndicator.style.display = 'none';
                     
                     // في حالة الخطأ، نضيف رسالة افتراضية
-                    addMessageToChat('عذراً، حدث خطأ في обработке رسالتك. يرجى المحاولة مرة أخرى.', 'ai');
+                    addMessageToChat('عذراً، حدث خطأ في обработке رسالتك. يرجى المحاولة مرة أخرى.', 'bot');
                 });
             }
             
