@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شات ويب مع n8n Webhook - POST</title>
+    <title>شات ويب مع n8n Webhook وردود الذكاء الاصطناعي</title>
     <style>
         :root {
             --primary-color: #4a89dc;
@@ -12,6 +12,7 @@
             --dark-color: #2c3e50;
             --success-color: #4caf50;
             --error-color: #f44336;
+            --ai-color: #8e44ad;
         }
         
         body {
@@ -120,6 +121,14 @@
             border-bottom-left-radius: 5px;
         }
         
+        .ai {
+            background-color: var(--ai-color);
+            color: white;
+            margin-right: auto;
+            margin-left: 0;
+            border-bottom-left-radius: 5px;
+        }
+        
         .message-time {
             font-size: 11px;
             margin-top: 5px;
@@ -197,6 +206,42 @@
             font-size: 14px;
         }
         
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background-color: #e6e6e6;
+            border-radius: 20px;
+            margin: 10px 0;
+            width: fit-content;
+        }
+        
+        .typing-dots {
+            display: flex;
+            align-items: center;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #777;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+        
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -215,12 +260,12 @@
 <body>
     <div class="container">
         <header>
-            <h1>شات ويب مع دعم n8n Webhook - POST</h1>
+            <h1>شات ويب مع دعم n8n Webhook وردود الذكاء الاصطناعي</h1>
         </header>
         
         <div class="webhook-setup">
             <label for="webhook-url">رابط ويب هوك n8n:</label>
-            <input type="url" id="webhook-url" placeholder="أhttps://sultannn.app.n8n.cloud/webhook-test/webhooktest">
+            <input type="url" id="webhook-url" placeholder="أدخل رابط الـ webhook الخاص بـ n8n هنا" value="https://sultannn.app.n8n.cloud/webhook-test/webhooktest">
             <div class="hint">سيتم حفظ الرابط تلقائياً محلياً في متصفحك</div>
         </div>
         
@@ -229,6 +274,18 @@
                 <div class="message received">
                     مرحباً! يمكنك إرسال رسائل وسيتم إرسالها إلى ويب هوك n8n باستخدام POST.
                     <div class="message-time">الآن</div>
+                </div>
+                <div class="message ai">
+                    مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟
+                    <div class="message-time">الآن</div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
                 </div>
             </div>
             
@@ -253,6 +310,7 @@
             const statusDiv = document.getElementById('status');
             const togglePreview = document.getElementById('toggle-preview');
             const requestPreview = document.getElementById('request-preview');
+            const typingIndicator = document.getElementById('typing-indicator');
             
             // تحميل رابط الويب هوك من التخزين المحلي إذا كان موجوداً
             const savedWebhookUrl = localStorage.getItem('webhookUrl');
@@ -308,6 +366,10 @@
                 const requestBody = JSON.stringify({ message: message });
                 requestPreview.textContent = `POST ${webhookUrl}\n\nContent-Type: application/json\n\n${requestBody}`;
                 
+                // إظهار مؤشر الكتابة
+                typingIndicator.style.display = 'block';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
                 // إرسال الرسالة إلى ويب هوك n8n باستخدام POST
                 sendToWebhook(webhookUrl, message);
                 
@@ -352,20 +414,50 @@
                 })
                 .then(data => {
                     showStatus('تم إرسال الرسالة بنجاح إلى n8n', 'success');
-                    // إضافة رسالة وهمية للرد (لأغراض العرض فقط)
-                    setTimeout(() => {
-                        addMessageToChat('تم استلام رسالتك بنجاح في n8n', 'received');
-                    }, 1000);
+                    
+                    // إخفاء مؤشر الكتابة
+                    typingIndicator.style.display = 'none';
+                    
+                    // عرض رد الذكاء الاصطناعي من n8n
+                    if (data && data.output) {
+                        // استخراج النص من الرد
+                        const aiResponse = extractTextFromAIResponse(data.output);
+                        addMessageToChat(aiResponse, 'ai');
+                    } else {
+                        // في حالة عدم وجود رد، نضيف رسالة افتراضية
+                        addMessageToChat('شكراً على رسالتك. كيف يمكنني مساعدتك further?', 'ai');
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     showStatus('فشل في إرسال الرسالة: ' + error.message, 'error');
                     
-                    // في حالة الخطأ، نضيف رسالة وهمية للرد لأغراض العرض
-                    setTimeout(() => {
-                        addMessageToChat('هذه استجابة تجريبية من n8n (محاكاة)', 'received');
-                    }, 1000);
+                    // إخفاء مؤشر الكتابة
+                    typingIndicator.style.display = 'none';
+                    
+                    // في حالة الخطأ، نضيف رسالة افتراضية
+                    addMessageToChat('عذراً، حدث خطأ في обработке رسالتك. يرجى المحاولة مرة أخرى.', 'ai');
                 });
+            }
+            
+            function extractTextFromAIResponse(output) {
+                // محاولة استخراج النص من رد الذكاء الاصطناعي
+                if (typeof output === 'string') {
+                    return output;
+                } else if (output && typeof output === 'object') {
+                    // إذا كان الرد يحتوي على حقل output
+                    if (output.output) {
+                        return output.output;
+                    }
+                    // إذا كان الرد يحتوي على نص في حقل آخر
+                    const firstKey = Object.keys(output)[0];
+                    if (firstKey && output[firstKey]) {
+                        return output[firstKey];
+                    }
+                }
+                
+                // إذا لم نتمكن من استخراج النص، نعود برسالة افتراضية
+                return "شكراً على رسالتك. كيف يمكنني مساعدتك further?";
             }
             
             function showStatus(message, type) {
