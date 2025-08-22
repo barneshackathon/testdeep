@@ -30,9 +30,9 @@
         .screen {
             width: 100%;
             max-width: 380px;
-            min-height: 100vh;
-            min-height: 100svh;
-            min-height: 100dvh;
+            height: 100vh;
+            height: 100svh;
+            height: 100dvh;
             margin: 0 auto;
             background: #fff;
             border-radius: 28px;
@@ -51,6 +51,7 @@
             background: var(--green);
             color: #fff;
             padding: 10px 12px;
+            flex-shrink: 0;
         }
         
         .chat-header .icon-btn.back {
@@ -90,19 +91,23 @@
             opacity: 0.8;
         }
         
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
         .chat-body {
             padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            height: calc(100vh - 200px);
-            max-height: 709px;
             overflow-y: auto;
             overflow-x: hidden;
             flex: 1;
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
-            padding-bottom: calc(var(--chat-input-h) + 80px);
         }
         
         .msg {
@@ -110,6 +115,7 @@
             padding: 10px 12px;
             border-radius: 14px;
             font-size: 14px;
+            word-wrap: break-word;
         }
         
         .msg.bot {
@@ -124,25 +130,18 @@
             align-self: flex-end;
         }
         
-        .chat-input {
+        .chat-input-container {
             display: flex;
             gap: 8px;
             border-top: 1px solid #eee;
             padding: 8px 12px;
-            position: fixed;
-            bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 8px);
-            left: 50%;
-            transform: translateX(-50%);
             background: #fff;
             z-index: 10;
             min-height: var(--chat-input-h);
-            border-radius: 24px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 380px;
+            flex-shrink: 0;
         }
         
-        .chat-input input {
+        .chat-input-container input {
             flex: 1;
             padding: 12px 14px;
             border-radius: 20px;
@@ -150,7 +149,7 @@
             font-size: 14px;
         }
         
-        .chat-input .send {
+        .chat-input-container .send {
             background: var(--green);
             color: #fff;
             border: 0;
@@ -160,13 +159,12 @@
             transition: all 0.2s ease;
         }
         
-        .chat-input .send:hover {
+        .chat-input-container .send:hover {
             background: #0a4a3a;
             transform: translateY(-1px);
         }
         
         .bottom-nav {
-            margin-top: auto;
             position: sticky;
             bottom: 0;
             display: grid;
@@ -177,6 +175,7 @@
             padding-bottom: calc(8px + var(--safe-bottom));
             z-index: 9;
             min-height: var(--bottom-nav-h);
+            flex-shrink: 0;
         }
         
         .bottom-nav .item {
@@ -223,6 +222,7 @@
             font-size: 12px;
             color: #666;
             display: none;
+            flex-shrink: 0;
         }
         
         .status.success {
@@ -244,6 +244,7 @@
             border-radius: 20px;
             margin: 10px 0;
             width: fit-content;
+            align-self: flex-start;
         }
         
         .typing-dots {
@@ -273,20 +274,6 @@
             50% { opacity: 1; }
         }
         
-        @media (max-width: 380px) {
-            .chat-input {
-                width: calc(100% - 16px);
-                max-width: 364px;
-            }
-        }
-        
-        @media (min-width: 381px) {
-            .chat-input {
-                width: 100%;
-                max-width: 380px;
-            }
-        }
-        
         @media (max-width: 440px) {
             .screen {
                 border-radius: 0;
@@ -307,21 +294,23 @@
             </div>
         </header>
 
-        <main class="chat-body" id="chat-body" role="log" aria-live="polite">
-            <div class="msg bot">Hey there! I'm Barnie, your friendly coffee buddy. How's your day going so far? Any drink on your mind?</div>
-        </main>
+        <div class="chat-container">
+            <main class="chat-body" id="chat-body" role="log" aria-live="polite">
+                <div class="msg bot">Hey there! I'm Barnie, your friendly coffee buddy. How's your day going so far? Any drink on your mind?</div>
+            </main>
 
-        <div class="typing-indicator" id="typing-indicator">
-            <div class="typing-dots">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
             </div>
+
+            <div class="status" id="status"></div>
         </div>
 
-        <div class="status" id="status"></div>
-
-        <form class="chat-input" id="chat-form">
+        <form class="chat-input-container" id="chat-form">
             <input id="chat-text" placeholder="Write your message .." autocomplete="off" />
             <button class="send" type="submit">➤</button>
         </form>
@@ -363,6 +352,14 @@
                 sendMessage();
             });
             
+            // إرسال الرسالة عند الضغط على Enter
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
             function sendMessage() {
                 const message = chatInput.value.trim();
                 
@@ -375,7 +372,7 @@
                 
                 // إظهار مؤشر الكتابة
                 typingIndicator.style.display = 'block';
-                chatBody.scrollTop = chatBody.scrollHeight;
+                scrollToBottom();
                 
                 // إرسال الرسالة إلى ويب هوك n8n باستخدام POST
                 sendToWebhook(webhookUrl, message);
@@ -391,9 +388,14 @@
                 messageDiv.textContent = message;
                 
                 chatBody.appendChild(messageDiv);
-                
+                scrollToBottom();
+            }
+            
+            function scrollToBottom() {
                 // التمرير إلى الأسفل لعرض الرسالة الجديدة
-                chatBody.scrollTop = chatBody.scrollHeight;
+                setTimeout(() => {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 100);
             }
             
             function sendToWebhook(url, message) {
@@ -486,6 +488,9 @@
                     statusDiv.className = 'status';
                 }, 3000);
             }
+            
+            // التمرير إلى الأسفل عند تحميل الصفحة
+            scrollToBottom();
         });
     </script>
 </body>
