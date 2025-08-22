@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شات ويب مع n8n Webhook وردود الذكاء الاصطناعي</title>
+    <title>شات ويب مع n8n Webhook و Respond to Webhook</title>
     <style>
         :root {
             --primary-color: #4a89dc;
@@ -260,7 +260,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>شات ويب مع دعم n8n Webhook وردود الذكاء الاصطناعي</h1>
+            <h1>شات ويب مع دعم n8n Webhook و Respond to Webhook</h1>
         </header>
         
         <div class="webhook-setup">
@@ -272,11 +272,11 @@
         <div class="chat-container">
             <div class="chat-messages" id="chat-messages">
                 <div class="message received">
-                    مرحباً! يمكنك إرسال رسائل وسيتم إرسالها إلى ويب هوك n8n باستخدام POST.
+                    مرحباً! هذه الدردشة تستخدم خاصية Respond to Webhook في n8n.
                     <div class="message-time">الآن</div>
                 </div>
                 <div class="message ai">
-                    مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟
+                    أهلاً بك! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟
                     <div class="message-time">الآن</div>
                 </div>
             </div>
@@ -418,11 +418,11 @@
                     // إخفاء مؤشر الكتابة
                     typingIndicator.style.display = 'none';
                     
-                    // عرض رد الذكاء الاصطناعي من n8n
-                    if (data && data.output) {
-                        // استخراج النص من الرد
-                        const aiResponse = extractTextFromAIResponse(data.output);
-                        addMessageToChat(aiResponse, 'ai');
+                    // عرض الرد الفعلي من n8n (من Respond to Webhook)
+                    if (data) {
+                        // محاولة استخراج النص من الرد
+                        const responseText = extractResponseText(data);
+                        addMessageToChat(responseText, 'ai');
                     } else {
                         // في حالة عدم وجود رد، نضيف رسالة افتراضية
                         addMessageToChat('شكراً على رسالتك. كيف يمكنني مساعدتك further?', 'ai');
@@ -440,20 +440,31 @@
                 });
             }
             
-            function extractTextFromAIResponse(output) {
-                // محاولة استخراج النص من رد الذكاء الاصطناعي
-                if (typeof output === 'string') {
-                    return output;
-                } else if (output && typeof output === 'object') {
-                    // إذا كان الرد يحتوي على حقل output
-                    if (output.output) {
-                        return output.output;
+            function extractResponseText(data) {
+                // محاولة استخراج النص من الرد بطرق مختلفة
+                if (typeof data === 'string') {
+                    return data;
+                } else if (data && typeof data === 'object') {
+                    // إذا كان الرد يحتوي على حقل response أو message أو text
+                    if (data.response) {
+                        return data.response;
+                    } else if (data.message) {
+                        return data.message;
+                    } else if (data.text) {
+                        return data.text;
+                    } else if (data.output) {
+                        return data.output;
                     }
-                    // إذا كان الرد يحتوي على نص في حقل آخر
-                    const firstKey = Object.keys(output)[0];
-                    if (firstKey && output[firstKey]) {
-                        return output[firstKey];
+                    
+                    // إذا لم نجد الحقول الشائعة، نعيد أول خاصية نصية نجدها
+                    for (const key in data) {
+                        if (typeof data[key] === 'string') {
+                            return data[key];
+                        }
                     }
+                    
+                    // إذا لم نجد أي نص، نعيد JSON.stringify للكائن
+                    return JSON.stringify(data);
                 }
                 
                 // إذا لم نتمكن من استخراج النص، نعود برسالة افتراضية
